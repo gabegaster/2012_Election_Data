@@ -11,92 +11,9 @@ import httplib2
 import BeautifulSoup
 from collections import defaultdict
 
-def to_lower(string):
-	return string.lower()
-
-def remove_spaces(string):
-	return string.replace(" ","-")
-
-def url2soup(url):
-	h = httplib2.Http('.cache')
-	page = h.request(url, "GET")[1]
-	return BeautifulSoup.BeautifulStoneSoup(page)
-	
-def soup2table_rows(soup):
-	tables = soup.findAll('table')
-	if len(tables) == 1:
-		# there might be only one county in the state!
-		return tables[0].findAll('tr')
-	elif len(tables)==0:
-		return False
-	else:
-		return tables[1].findAll('tr')
-
-def is_header(soup):
-	return bool(soup.findAll(attrs='results-county'))
-
-def is_column(soup):
-	return bool(soup.findAll(scope='col'))
-
-def is_row(soup):
-	return bool(soup.findAll(scope='row'))
-
-def fetch_county_from_header(soup):
-	return soup.findAll(attrs='results-county')[0].contents[0]
-
-def fetch_party(soup):
-	out =  soup.findAll(attrs='results-party')[0].contents[0].contents[0]
-	if type(out) == BeautifulSoup.Tag:
-		return out.contents[0]
-	else:
-		return out
-
-def fetch_candidate(soup):
-	out = soup.findAll(attrs='results-candidate')[0].contents[0]
-	if type(out) == BeautifulSoup.Tag:
-		return out.contents[0]
-	else:
-		return out
-
-def fetch_percent(soup):
-	out = soup.findAll(attrs='results-percentage')[0].contents[0]
-	if type(out) == BeautifulSoup.Tag:
-		return out.contents[0]
-	else:
-		return out
-
-def fetch_num(soup):
-	out = soup.findAll(attrs='results-popular')[0].contents[0]
-	if type(out) == BeautifulSoup.Tag:
-		return out.contents[0]
-	else:
-		return out
-
-def process_rows(rows):
-	counts = defaultdict(dict)
-	county_name = ""
-	for row in rows:
-		if is_column(row):
-			continue
-		data = {}
-		if is_header(row):
-			county_name = fetch_county_from_header(row)
-			won = True
-		else:
-			won = False
-		data['party'] = fetch_party(row)
-		data['candidate'] = fetch_candidate(row)
-		data['num'] = fetch_num(row)
-		data['won'] = str(won)
-		data['percent'] = fetch_percent(row)
-
-		counts[county_name][fetch_party(row)] = data
-
-	return counts
-
-def is_single_county(soup):
-	tables = soup.findAll('table')
-	return len(tables) == 1
+def __main__():
+	data = scrape_national_counts()
+	write_national_counts(data)
 
 def scrape_national_counts():
 	h = httplib2.Http('.cache')
@@ -139,6 +56,89 @@ def write_national_counts(national_dict):
 				f.write(stuff)
 	f.close()
 
-def __main__():
-	data = scrape_national_counts()
-	write_national_counts(data)
+def url2soup(url):
+	h = httplib2.Http('.cache')
+	page = h.request(url, "GET")[1]
+	return BeautifulSoup.BeautifulStoneSoup(page)
+	
+def soup2table_rows(soup):
+	tables = soup.findAll('table')
+	if len(tables) == 1:
+		# there might be only one county in the state!
+		return tables[0].findAll('tr')
+	elif len(tables)==0:
+		return False
+	else:
+		return tables[1].findAll('tr')
+
+def process_rows(rows):
+	counts = defaultdict(dict)
+	county_name = ""
+	for row in rows:
+		if is_column(row):
+			continue
+		data = {}
+		if is_header(row):
+			county_name = fetch_county_from_header(row)
+			won = True
+		else:
+			won = False
+		data['party'] = fetch_party(row)
+		data['candidate'] = fetch_candidate(row)
+		data['num'] = fetch_num(row)
+		data['won'] = str(won)
+		data['percent'] = fetch_percent(row)
+
+		counts[county_name][fetch_party(row)] = data
+
+	return counts
+
+def to_lower(string):
+	return string.lower()
+
+def remove_spaces(string):
+	return string.replace(" ","-")
+
+def is_header(soup):
+	return bool(soup.findAll(attrs='results-county'))
+
+def is_column(soup):
+	return bool(soup.findAll(scope='col'))
+
+def is_row(soup):
+	return bool(soup.findAll(scope='row'))
+
+def is_single_county(soup):
+	tables = soup.findAll('table')
+	return len(tables) == 1
+
+def fetch_county_from_header(soup):
+	return soup.findAll(attrs='results-county')[0].contents[0]
+
+def fetch_party(soup):
+	out =  soup.findAll(attrs='results-party')[0].contents[0].contents[0]
+	if type(out) == BeautifulSoup.Tag:
+		return out.contents[0]
+	else:
+		return out
+
+def fetch_candidate(soup):
+	out = soup.findAll(attrs='results-candidate')[0].contents[0]
+	if type(out) == BeautifulSoup.Tag:
+		return out.contents[0]
+	else:
+		return out
+
+def fetch_percent(soup):
+	out = soup.findAll(attrs='results-percentage')[0].contents[0]
+	if type(out) == BeautifulSoup.Tag:
+		return out.contents[0]
+	else:
+		return out
+
+def fetch_num(soup):
+	out = soup.findAll(attrs='results-popular')[0].contents[0]
+	if type(out) == BeautifulSoup.Tag:
+		return out.contents[0]
+	else:
+		return out
